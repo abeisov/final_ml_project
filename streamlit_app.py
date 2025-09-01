@@ -1,5 +1,5 @@
+
 import joblib
-import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -11,9 +11,9 @@ def load_artifacts():
 
 model, le = load_artifacts()
 
-st.set_page_config(page_title="Obesity Level Predictor", page_icon="💪", layout="centered")
-st.title("Обозреватель уровня веса/ожирения")
-st.caption("Вводите данные — модель предскажет категорию (NObeyesdad)")
+st.set_page_config(page_title="Obesity Level Predictor", layout="centered")
+st.title("Определение уровня веса/ожирения")
+st.caption("Введите данные — модель предскажет категорию (NObeyesdad)")
 
 st.subheader("Антропометрия")
 col1, col2, col3 = st.columns(3)
@@ -70,10 +70,38 @@ if st.button("Предсказать уровень"):
     proba = model.predict_proba(df_one)[0]
     pred_label = le.inverse_transform([pred_num])[0]
 
-    st.success(f"Предсказание: **{pred_label}**")
-    st.caption("Вероятности по классам:")
-    prob_df = pd.DataFrame({"class": le.classes_, "probability": proba})
-    prob_df = prob_df.sort_values("probability", ascending=False).reset_index(drop=True)
-    st.bar_chart(prob_df.set_index("class"))
-    with st.expander("Таблица вероятностей"):
-        st.dataframe(prob_df, use_container_width=True)
+    st.subheader("Результат")
+    left, right = st.columns([1,1])
+
+    with left:
+        st.success(f"Предсказанная категория: **{pred_label}**")
+        st.caption("Вероятности по классам:")
+        prob_df = pd.DataFrame({"class": le.classes_, "probability": proba})
+        prob_df = prob_df.sort_values("probability", ascending=False).reset_index(drop=True)
+        st.dataframe(prob_df, use_container_width=True, height=260)
+
+    with right:
+        order = [
+            "Insufficient_Weight",
+            "Normal_Weight",
+            "Overweight_Level_I",
+            "Overweight_Level_II",
+            "Obesity_Type_I",
+            "Obesity_Type_II",
+            "Obesity_Type_III"
+        ]
+        desc = {
+            "Insufficient_Weight": "Недостаточный вес",
+            "Normal_Weight": "Нормальный вес",
+            "Overweight_Level_I": "Избыточный вес (уровень I)",
+            "Overweight_Level_II": "Избыточный вес (уровень II)",
+            "Obesity_Type_I": "Ожирение I степени",
+            "Obesity_Type_II": "Ожирение II степени",
+            "Obesity_Type_III": "Ожирение III степени"
+        }
+        ref_df = pd.DataFrame({
+            "Класс": order,
+            "Описание": [desc[c] for c in order]
+        })
+        st.markdown("**Справочная шкала уровней**")
+        st.dataframe(ref_df, use_container_width=True, height=260)
